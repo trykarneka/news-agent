@@ -11,7 +11,7 @@ TO_EMAIL = os.getenv("TO_EMAIL")
 NEWS_CATEGORIES = os.getenv("NEWS_CATEGORIES", "general").split(",")  # e.g. "technology,business"
 
 def fetch_news(category):
-    url = f"https://newsapi.org/v2/top-headlines?country=us&category={category}&apiKey={NEWS_API_KEY}"
+    url = f"https://newsapi.org/v2/top-headlines?country=in&category={category}&apiKey={NEWS_API_KEY}"
     response = requests.get(url).json()
     articles = response.get("articles", [])[:5]
     news_html = f"<h2>{category.capitalize()} News</h2>"
@@ -22,7 +22,7 @@ def fetch_news(category):
     return news_html
 
 def send_email(news_content):
-    subject = f"Your Morning News Digest - {date.today()}"
+    subject = f"Your Morning India News Digest - {date.today()}"
     message = Mail(
         from_email=From(FROM_EMAIL),
         to_emails=To(TO_EMAIL),
