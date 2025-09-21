@@ -41,7 +41,7 @@ from sendgrid.helpers.mail import Mail
 def fetch_world_news(api_key, categories=None):
     base_url = "https://api.worldnewsapi.com/search-news"
     params = {
-        "source-country": "in",   # ✅ India-specific
+        "source-country": "us",   # ✅ India-specific
         "language": "en",
         "number": 5               # how many articles per category
     }
