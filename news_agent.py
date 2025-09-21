@@ -24,34 +24,48 @@ def fetch_news(category):
 
 def fetch_world_news(api_key, category=None):
     base_url = "https://api.worldnewsapi.com/search-news"
+    
+    # 1️⃣ same as your curl
     headers = {"x-api-key": api_key}
+    
     params = {
-        "source-countries": "in",   # Try "country" if this fails
+        "source-countries": "in",
         "language": "en",
         "number": 5
     }
     if category:
         params["categories"] = category.strip()
-        print(f"Fetching India news for category: {category}")
 
     resp = requests.get(base_url, headers=headers, params=params)
+
+    if resp.status_code == 401:
+        print("⚠️ Got 401 with x-api-key header, retrying with Authorization header...")
+        
+        # 2️⃣ Retry with Authorization header
+        headers = {"Authorization": f"ApiKey {api_key}"}
+        resp = requests.get(base_url, headers=headers, params=params)
+
+    if resp.status_code == 401:
+        print("⚠️ Still unauthorized, trying as query param...")
+        
+        # 3️⃣ Retry with api-key in query
+        params["api-key"] = api_key
+        headers = {}  # clear headers
+        resp = requests.get(base_url, headers=headers, params=params)
+
     print("DEBUG STATUS:", resp.status_code)
+    print("DEBUG RESPONSE:", resp.text[:500])  # only first 500 chars
 
     try:
         data = resp.json()
-        print("DEBUG JSON KEYS:", list(data.keys()))
-
-        # Handle different structures
-        if "news" in data and isinstance(data["news"], list):
+        if "news" in data:
             return data["news"]
-        elif "articles" in data and isinstance(data["articles"], list):
+        elif "articles" in data:
             return data["articles"]
         else:
-            print("⚠️ No 'news' or 'articles' key found. Raw response:", data)
             return []
     except Exception as e:
-        print("❌ Error parsing response:", e)
-        print("Raw text:", resp.text)
+        print("Error parsing JSON:", e)
         return []
 
 def format_news_grouped(api_key, categories):
