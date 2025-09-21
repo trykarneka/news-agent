@@ -38,38 +38,35 @@ import requests
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 '''
-def fetch_world_news(api_key, categories=None):
+def fetch_world_news(api_key, category=None):
     base_url = "https://api.worldnewsapi.com/search-news"
+    headers = {"x-api-key": api_key}
     params = {
-        "source-country": "us",   # ✅ India-specific
+        "source-countries": "in",   # ✅ India-specific
         "language": "en",
-        "number": 5               # how many articles per category
+        "number": 5
     }
-    all_articles = []
+    if category:
+        params["categories"] = category.strip()
+        print(f"Fetching India news for category: {category}")
+    resp = requests.get(base_url, headers=headers, params=params)
+    data = resp.json()
+    return data.get("news", [])
 
-    if categories:
-        for cat in categories.split(","):
-            params["categories"] = cat.strip()
-            print(f"Fetching category: {cat}")
-            resp = requests.get(base_url, headers={"x-api-key": api_key}, params=params)
-            data = resp.json()
-            articles = data.get("news", [])
-            all_articles.extend(articles)
-    else:
-        resp = requests.get(base_url, headers={"x-api-key": api_key}, params=params)
-        data = resp.json()
-        all_articles = data.get("news", [])
+def format_news_grouped(api_key, categories):
+    email_body = "📰 **Your Morning India News Digest**\n\n"
 
-    return all_articles
-
-def format_news(articles):
-    if not articles:
-        return "⚠️ No news articles found today."
-
-    body = ""
-    for art in articles:
-        body += f"- {art.get('title')} ({art.get('url')})\n"
-    return body
+    for cat in categories.split(","):
+        articles = fetch_world_news(api_key, cat)
+        email_body += f"\n=== {cat.capitalize()} ===\n"
+        if not articles:
+            email_body += "⚠️ No articles found.\n"
+        else:
+            for art in articles:
+                title = art.get("title")
+                url = art.get("url")
+                email_body += f"- {title} ({url})\n"
+    return email_body
 
 def send_email(content):
     message = Mail(
@@ -84,9 +81,7 @@ def send_email(content):
 
 if __name__ == "__main__":
     api_key = os.getenv("WORLDNEWS_API_KEY")
-    categories = os.getenv("NEWS_CATEGORIES", "politics,business,technology")
+    categories = os.getenv("NEWS_CATEGORIES", "politics,business,technology,sports")
 
-    articles = fetch_world_news(api_key, categories)
-    email_body = format_news(articles)
+    email_body = format_news_grouped(api_key, categories)
     send_email(email_body)
-
