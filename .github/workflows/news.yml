@@ -28,4 +28,4 @@ jobs:
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
           NEWS_CATEGORIES: ${{ secrets.NEWS_CATEGORIES }}
-	  WORLDNEWS_API_KEY: ${{ secrets.WORLDNEWS_API_KEY }}
+          WORLDNEWS_API_KEY: ${{ secrets.WORLDNEWS_API_KEY }}
