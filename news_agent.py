@@ -21,37 +21,38 @@ def fetch_news(category):
     for a in articles:
         news_html += f"<p><b>{a['title']}</b><br>{a.get('description','')}<br><a href='{a['url']}'>Read more</a></p>"
     return news_html
-'''
-def send_email(news_content):
-    subject = f"Your Morning India News Digest - {date.today()}"
-    message = Mail(
-        from_email=From(FROM_EMAIL),
-        to_emails=To(TO_EMAIL),
-        subject=subject,
-        html_content=news_content
-    )
-    sg = SendGridAPIClient(SENDGRID_API_KEY)
-    resp = sg.send(message)
-    print(f"SendGrid response: {resp.status_code}")
-import os
-import requests
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
-'''
+
 def fetch_world_news(api_key, category=None):
     base_url = "https://api.worldnewsapi.com/search-news"
     headers = {"x-api-key": api_key}
     params = {
-        "source-countries": "in",   # ✅ India-specific
+        "source-countries": "in",   # Try "country" if this fails
         "language": "en",
         "number": 5
     }
     if category:
         params["categories"] = category.strip()
         print(f"Fetching India news for category: {category}")
+
     resp = requests.get(base_url, headers=headers, params=params)
-    data = resp.json()
-    return data.get("news", [])
+    print("DEBUG STATUS:", resp.status_code)
+
+    try:
+        data = resp.json()
+        print("DEBUG JSON KEYS:", list(data.keys()))
+
+        # Handle different structures
+        if "news" in data and isinstance(data["news"], list):
+            return data["news"]
+        elif "articles" in data and isinstance(data["articles"], list):
+            return data["articles"]
+        else:
+            print("⚠️ No 'news' or 'articles' key found. Raw response:", data)
+            return []
+    except Exception as e:
+        print("❌ Error parsing response:", e)
+        print("Raw text:", resp.text)
+        return []
 
 def format_news_grouped(api_key, categories):
     email_body = "📰 **Your Morning India News Digest**\n\n"
@@ -63,8 +64,8 @@ def format_news_grouped(api_key, categories):
             email_body += "⚠️ No articles found.\n"
         else:
             for art in articles:
-                title = art.get("title")
-                url = art.get("url")
+                title = art.get("title", "No Title")
+                url = art.get("url", "#")
                 email_body += f"- {title} ({url})\n"
     return email_body
 
